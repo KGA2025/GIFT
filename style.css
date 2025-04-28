@@ -1,0 +1,42 @@
+
+body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    background: #f8f8f8;
+    margin: 0;
+    padding: 20px;
+}
+.section {
+    display: none;
+}
+.section.active {
+    display: block;
+}
+h1, h2 {
+    color: #333;
+}
+button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+.coupon {
+    background: #fff;
+    border: 2px solid #ccc;
+    border-radius: 12px;
+    padding: 20px;
+    display: inline-block;
+    margin-top: 40px;
+}
+.gift-img {
+    width: 300px;
+    margin: 20px 0;
+}
+.barcode {
+    width: 200px;
+    margin: 20px 0;
+}
+.gift-info {
+    font-size: 16px;
+    color: #555;
+}

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시홍이 생일 퀴즈 🎉</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: lavender;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 500px;
+      width: 90%;
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .progress-bar {
+      width: 100%;
+      background-color: #eee;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      height: 10px;
+    }
+    .progress {
+      height: 100%;
+      background-color: #ff6495;
+      width: 0%;
+      transition: width 0.3s ease-in-out;
+    }
+    #timer {
+      font-size: 1.2rem;
+      color: #ff3366;
+      margin: 0.5rem 0;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      background-color: #ff6495;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff3366;
+    }
+    input[type="number"], select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin: 0.5rem;
+      width: 80%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #quiz, #gift {
+      display: none;
+    }
+    #gift img {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 1rem;
+    }
+    .barcode {
+      display: flex;
+      justify-content: center; /* 중앙 정렬 */
+      width: 100%; /* 전체 너비를 채움 */
+      height: 50px; /* 높이 수정 */
+      margin-top: 1rem;
+      overflow: hidden;
+      background: white;
+    }
+
+    .barcode span {
+        display: inline-block;
+        background: #000;
+        height: 100%;
+        margin-right: 1px;
+    }
+    .back-button {
+      background-color: #ccc;
+      color: #333;
+      margin-top: 1.5rem;
+    }
+    .back-button:hover {
+      background-color: #aaa;
+    }
+
+    /* 여기부터 새로 추가! */
+    #final {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start; /* 상단 정렬 */
+      padding: 2rem 1rem;
+      background-color: black;
+      color: white;
+      text-align: center;
+    }
+
+
+    #final video {
+      max-width: 90%;
+      border-radius: 16px;
+      margin-bottom: 30px;
+    }
+
+    #message {
+      font-size: 1.6rem; /* 기존보다 살짝 크게 */
+      margin-top: 1.5rem;
+      white-space: pre-wrap;
+      text-align: center;
+      line-height: 1.6;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    } 
+    #video-message {
+      position: absolute;
+      top: 100px; /* 영상 상단에서 약간 떨어지게 */
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 2rem; /* 크기를 적당히 조정 */
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* 글자가 잘 보이게 그림자 추가 */
+      z-index: 10; /* 영상 위에 표시되도록 설정 */
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="intro">
+      <h1 id="typing-title"></h1>
+      <p>퀴즈를 풀고, 선물을 받아라!</p>
+      <button onclick="startQuiz()">퀴즈 풀기</button>
+    </div>
+
+    <div id="quiz">
+      
+      <div id="timer">⏳ 10초 남았어요</div>
+
+      <div id="question-1">
+        <h2>1. 우리가 처음 사귄 날짜는?</h2>
+        <h2>(대답 형태: (빈칸)월 (빈칸)일)</h2>
+        <input type="number" id="month-1" placeholder="월" min="1" max="12">
+        <input type="number" id="day-1" placeholder="일" min="1" max="31">
+        <button onclick="checkAnswer1()">확인</button>
+        <p id="result-1"></p>
+      </div>
+
+      <div id="question-2" style="display: none;">
+        <h2>2. 우리가 처음 만난 날짜는?</h2>
+        <h2>(대답 형태: (빈칸)월 (빈칸)일)</h2>
+        <input type="number" id="month-2" placeholder="월" min="1" max="12">
+        <input type="number" id="day-2" placeholder="일" min="1" max="31">
+        <button onclick="checkAnswer2()">확인</button>
+        <p id="result-2"></p>
+      </div>
+
+      <div id="question-3" style="display: none;">
+        <h2>3. 다음 중 근아가 시홍이한테 생일선물로 준 게 아닌 것은?</h2>
+        <button onclick="checkAnswer3('A')">에어팟</button>
+        <button onclick="checkAnswer3('B')">젠틀몬스터 선글라스</button>
+        <button onclick="checkAnswer3('C')">메종키츠네 키링</button>
+        <button onclick="checkAnswer3('D')">아이패드</button>
+        <button onclick="checkAnswer3('E')">보테가베네타 지갑</button>
+        <p id="result-3"></p>
+      </div>
+
+      <div id="question-4" style="display: none;">
+        <h2>4. 근아랑 생일 보내기 vs</h2>
+        <h2>세상에서 제일 귀여운 여자랑 생일 보내고 100억 받기</h2>
+        <button onclick="checkAnswer4('1')">근아랑 생일 보내기</button>
+        <button onclick="checkAnswer4('2')">세상에서 제일 귀여운 여자랑 생일 보내고 100억 받기</button>
+        <p id="result-4"></p>
+      </div>
+
+      <div id="question-5" style="display: none;">
+        <h2>5. 생일 선물을 맞춰보세요.</h2>
+        <button onclick="nextQuestion()">옷</button>
+        <button onclick="nextQuestion()">뽀뽀</button>
+        <button onclick="nextQuestion()">포옹</button>
+        <button onclick="nextQuestion()">편지</button>
+        <button onclick="nextQuestion()">케이크</button>
+      </div>
+
+      <h2>  </h2>
+      <div class="progress-bar"><div class="progress" id="progress-bar"></div></div>
+    </div>
+
+    <div id="gift">
+        <h1>🎁 김근아의 선물 🎁</h1>
+        <img src="gift.png" alt="뉴발란스 993" />
+        <h2>뉴발란스 993 운동화</h2>
+        <div class="barcode" id="barcode"></div>
+        <p>교환처: 여자친구</p>
+        <p>사용 기한: 2026.4.29</p>
+        <button onclick="goToFinalPage()">지금 선물 받기</button>
+      </div>
+
+      <div id="final" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: black; color: white;">
+        <div id="video-message">
+          <p>🎉5년간의 홍시 생일 기록🎉</p>
+        </div>
+        <video autoplay muted playsinline style="max-width: 90%; border-radius: 16px; margin-bottom: 30px;">
+          <source src="video.mp4" type="video/mp4" />
+          당신의 브라우저는 비디오를 지원하지 않습니다.
+        </video>
+        <div id="message" style="font-family: 'Courier New', monospace; font-size: 1.4rem; white-space: pre-wrap; text-align: center;"></div>
+      </div>
+  </div>
+
+  <script>
+    let timer;
+    let currentQuestion = 1;
+    let i = 0;
+    const txt = '생일 축하해 시홍아 🎂'; 
+    const speed = 50; // 타이핑 속도 (조절 가능)
+
+    window.addEventListener('DOMContentLoaded', () => {
+        typeWriter();
+      // 폭죽 연속으로 3번 터뜨리기
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }, i * 500); // 0ms, 500ms, 1000ms
+      }
+    });
+
+    function typeWriter() {
+      if (i < txt.length) {
+        document.getElementById("typing-title").textContent += txt.charAt(i);
+        i++;
+        setTimeout(typeWriter, speed);
+      }
+    }
+  
+    function startQuiz() {
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById('quiz').style.display = 'block';
+      document.getElementById('question-1').style.display = 'block';
+      document.getElementById('progress-bar').style.width = '20%';
+      // fireConfetti(); // 시작 시 폭죽
+      startTimer();
+    }
+  
+    function restartQuiz() {
+      document.getElementById('gift').style.display = 'none';
+      document.getElementById('intro').style.display = 'block';
+      document.getElementById('month-1').value = '';
+      document.getElementById('day-1').value = '';
+      document.getElementById('month-2').value = '';
+      document.getElementById('day-2').value = '';
+      document.getElementById('result-1').textContent = '';
+      document.getElementById('result-2').textContent = '';
+      document.getElementById('result-3').textContent = '';
+      document.getElementById('result-4').textContent = '';
+      document.getElementById('quiz').style.display = 'none';
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`question-${i}`).style.display = 'none';
+      }
+      document.getElementById('progress-bar').style.width = '0%';
+      clearInterval(timer);
+      currentQuestion = 1;
+      fireConfetti(); // 시작 시 폭죽
+    }
+  
+    function checkAnswer1() {
+      const month = document.getElementById('month-1').value;
+      const day = document.getElementById('day-1').value;
+      const result = document.getElementById('result-1');
+      if (parseInt(month) === 6 && parseInt(day) === 5) {
+        result.textContent = '정답이에요! 🎉🎉🎉🎉🎉🎉';
+        setTimeout(() => {
+            moveToNextQuestion(1);
+        }, 500);
+      } else {
+        result.textContent = '틀렸어요 😢😢😢 다시 생각해봐!';
+      }
+    }
+  
+    function checkAnswer2() {
+      const month = document.getElementById('month-2').value;
+      const day = document.getElementById('day-2').value;
+      const result = document.getElementById('result-2');
+      if (parseInt(month) === 5 && parseInt(day) === 16) {
+        result.textContent = '정답이에요! 🎉🎉🎉🎉🎉🎉';
+        setTimeout(() => {
+            moveToNextQuestion(2);
+        }, 500);
+      } else {
+        result.textContent = '틀렸어요 😢😢😢 다시 생각해봐!';
+      }
+    }
+  
+    function checkAnswer3(choice) {
+      const result = document.getElementById('result-3');
+      if (choice === 'C') {
+        result.textContent = '정답이에요! 🎉🎉🎉🎉🎉🎉';
+
+        setTimeout(() => {
+            moveToNextQuestion(3);
+        }, 500);
+      } else {
+        result.textContent = '틀렸어요 😢😢😢 다시 생각해봐!';
+      }
+    }
+  
+    function checkAnswer4(choice) {
+      const result = document.getElementById('result-4');
+      if (choice === '2') {
+        result.textContent = '정답이에요! 🎉🎉🎉🎉🎉🎉';
+        setTimeout(() => {
+            moveToNextQuestion(4);
+        }, 500);
+      } else {
+        result.textContent = '틀렸어요 😢😢😢 다시 생각해봐!';
+      }
+    }
+  
+    function moveToNextQuestion(questionNumber) {
+        clearInterval(timer);
+        document.getElementById(`question-${questionNumber}`).style.display = 'none';
+
+        if (questionNumber < 5) {
+            currentQuestion++;
+            document.getElementById(`question-${questionNumber + 1}`).style.display = 'block';
+            document.getElementById('progress-bar').style.width = `${currentQuestion * 20}%`;
+
+            // ❗️5번 문제일 때는 타이머 안 돌림
+            if (currentQuestion < 5) {
+                startTimer();
+            }
+        } else {
+            nextQuestion();
+        }
+      }
+  
+    function nextQuestion() {
+      clearInterval(timer);
+      document.getElementById('quiz').style.display = 'none';
+      document.getElementById('gift').style.display = 'block';
+      generateBarcode();
+      fireConfetti(); // 마지막 축하 폭죽
+    }
+
+    // 타이머 함수
+    function startTimer() {
+      let timeLeft = 10;
+      document.getElementById('timer').textContent = `⏳ ${timeLeft}초 남았어요`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = `⏳ ${timeLeft}초 남았어요`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          alert('시간이 다 되었어요! 다시 시도해보자 😢');
+          restartQuiz();
+        }
+      }, 1000);
+    }
+
+    // 폭죽 효과
+    function fireConfetti() {
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.6 }
+          });
+        }, i * 500); // 0ms, 500ms, 1000ms 간격으로
+      }
+    }
+
+
+    // 바코드 생성
+    function generateBarcode() {
+      const barcodeEl = document.getElementById('barcode');
+      barcodeEl.innerHTML = ''; // 이전 바코드 제거
+      for (let i = 0; i < 100; i++) {
+        const bar = document.createElement('span');
+        bar.style.width = `${Math.random() > 0.5 ? 2 : 1}px`;
+        barcodeEl.appendChild(bar);
+      }
+    }
+
+    function goToFinalPage() {
+    document.getElementById('gift').style.display = 'none';
+    const final = document.getElementById('final');
+    final.style.display = 'flex';
+
+    // 타이핑 애니메이션 시작
+    const message = "2020년에 만나서 5번째 생일을 같이 보내는 시홍아, 내가 세상에서 제일 생일 축하하고 사랑해♥♡♥♡♥♡";
+    const messageEl = document.getElementById("message");
+    let index = 0;
+
+    function typeEffect() {
+      if (index < message.length) {
+        messageEl.textContent += message.charAt(index);
+        index++;
+        setTimeout(typeEffect, 100);
+      } else {
+        // 마지막 커서 효과
+        const cursor = document.createElement("span");
+        cursor.style.display = 'inline-block';
+        cursor.style.width = '8px';
+        cursor.style.backgroundColor = '#fff';
+        cursor.style.marginLeft = '2px';
+        cursor.style.animation = 'blink 0.8s infinite';
+        messageEl.appendChild(cursor);
+      }
+    }
+
+    typeEffect();
+  }
+
+  </script>
+  
+</body>
+</html>
